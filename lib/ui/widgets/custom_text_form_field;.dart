@@ -9,7 +9,7 @@ class CustomTextFormField extends StatelessWidget {
   TextEditingController? controller;
    CustomTextFormField({required this.label,required this.type,
      this.isecureText=false,  this.validator,
-     controller});
+     this.controller});
 
   @override
   Widget build(BuildContext context) {
