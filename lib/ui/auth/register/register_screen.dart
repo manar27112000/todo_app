@@ -1,21 +1,37 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:todo_app/core/app_routes.dart';
 import 'package:todo_app/ui/widgets/custom_text_form_field;.dart';
 import 'package:todo_app/utils/email_validation.dart';
 
-class RegisterScreen extends StatelessWidget {
-  TextEditingController fullNameController = TextEditingController();
-  TextEditingController userNameController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passController = TextEditingController();
-  TextEditingController passContController = TextEditingController();
+class RegisterScreen extends StatefulWidget {
+
+  RegisterScreen({super.key});
+
   @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  TextEditingController fullNameController = TextEditingController();
+
+  TextEditingController userNameController = TextEditingController();
+
+  TextEditingController emailController = TextEditingController();
+
+  TextEditingController passController = TextEditingController();
+
+  TextEditingController re_passController = TextEditingController();
+
   var formKey = GlobalKey<FormState>();
+
+  @override
 
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
       appBar: AppBar(elevation: 0,
-        title: Center(child: const Text('Register Screen')),
+        title: const Center(child: Text('Register Screen')),
       ),
       body: Form(
         key: formKey,
@@ -32,7 +48,7 @@ class RegisterScreen extends StatelessWidget {
                   color: Colors.black45,
                   fit:BoxFit.contain,),
 
-                SizedBox(
+                const SizedBox(
                   height: 15,
                 ),
                 CustomTextFormField(
@@ -75,7 +91,7 @@ class RegisterScreen extends StatelessWidget {
                 CustomTextFormField(
                     label: const Text('Password'),
                     type: TextInputType.visiblePassword,
-                    isecureText: true,
+                    isecureText: false,
                     controller: passController,
                     validator: (input) {
                       if (input == null || input.trim().isEmpty) {
@@ -89,31 +105,50 @@ class RegisterScreen extends StatelessWidget {
                 CustomTextFormField(
                     label: const Text('re-password'),
                     type: TextInputType.visiblePassword,
-                    controller: passContController,
-                    isecureText: true,
+                    controller: re_passController,
+                    isecureText: false,
                     validator: (input) {
                       if (input == null || input.trim().isEmpty) {
                         return 'please enter password';
                       }
-                      if (input != passController.text) {
+
+                       if (input!= passController.text) {
+                         print('passcontroller: ${passController.text}');
+                         print('passcontroller: ${re_passController.text}');
                         return 'password does not match';
+
                       }
                       return null;
                     }),
-                SizedBox(
+                const SizedBox(
                   height: 30,
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black45,
                   ),
-                    onPressed: () {
-                      register();
+                    onPressed: ()  {
+                  register(  emailController.text, passController.text);
+                  print(emailController.text);
+                  print(passController.text);
+                  print(re_passController.text);
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: const Text('Register'),
-                    ))
+                    child: const Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: Text('Register'),
+                    )),
+                Row(
+                  children: [
+
+                    const Text('Already have account?',style: TextStyle(color: Colors.white,fontSize: 16)),
+                    TextButton(onPressed: (){
+                      Navigator.pushReplacementNamed(context, AppRoutes.login_route);
+                    },
+                        child: const Text('Sign in',style: TextStyle(color: Colors.white,
+                            fontSize: 14,decoration: TextDecoration.underline),))
+                  ],
+                )
+
               ],
             ),
           ),
@@ -122,9 +157,28 @@ class RegisterScreen extends StatelessWidget {
     );
   }
 
-  void register() {
+  Future<void> register(String emailController,String passController) async {
     if (formKey.currentState?.validate() == false) {
       return;
     }
+    try {
+      final credential =
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailController,
+        password: passController,
+      );
+      print('credential : ${credential.user?.uid}');
+      Navigator.pushReplacementNamed(context, AppRoutes.login_route);
+
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        print('The password provided is too weak.');
+      } else if (e.code == 'email-already-in-use') {
+        print('The account already exists for that email.');
+      }
+    } catch (e) {
+      print(e);
+    }
+
   }
 }
