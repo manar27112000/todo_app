@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:todo_app/core/app_routes.dart';
 import 'package:todo_app/ui/widgets/custom_text_form_field;.dart';
+import 'package:todo_app/utils/dialogs_utils.dart';
 import 'package:todo_app/utils/email_validation.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -107,18 +108,27 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     try {
+      DialogUtils.showLoadigDialog(context, 'Please ,Wait......');
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: emailAddress,
           password: password
       );
-      print('credential : ${credential.user?.uid}');
-      Navigator.pushReplacementNamed(context, AppRoutes.home_route);
-
+  DialogUtils.hideDialog(context);
+  DialogUtils.showMessageDialog(context,message: ' user logged in successfully' ,posActionTitle: 'ok'
+  ,posAction:(){ Navigator.pushReplacementNamed(context,AppRoutes.home_route);});
     } on FirebaseAuthException catch (e) {
+      DialogUtils.hideDialog(context);
       if (e.code == 'user-not-found') {
         print('No user found for that email.');
-      } else if (e.code == 'wrong-password') {
-        print('Wrong password provided for that user.');
+      } else if (
+          e.code == 'user-not-found' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential'
+      )
+      {
+DialogUtils.showMessageDialog(context,message: 'Wrong email or password',
+          posActionTitle: 'Try Again',
+);
       }
     }
   }
